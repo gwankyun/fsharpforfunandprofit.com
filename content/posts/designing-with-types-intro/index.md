@@ -9,17 +9,15 @@ seriesOrder: 1
 categories: [Types, DDD]
 ---
 
-In this series, we'll look at some of the ways we can use types as part of the design process.
-In particular, the thoughtful use of types can make a design more transparent and improve correctness at the same time.
+在本系列中，我们将介绍在设计过程中使用类型的一些方法。特别是，深思熟虑地使用类型可以使设计更加透明，同时提高正确性。
 
-This series will be focused on the "micro level" of design. That is, working at the lowest level of individual types and functions.
-Higher level design approaches, and the associated decisions about using functional or object-oriented style, will be discussed in another series.
+本系列将关注设计的「微观层面」。也就是说，在单个类型和功能的最低级别上工作。更高层次的设计方法，以及使用函数式或面向对象风格的相关决策，将在另一个系列中讨论。
 
-Many of the suggestions are also feasible in C# or Java, but the lightweight nature of F# types means that it is much more likely that we will do this kind of refactoring.
+许多建议在C\#或Java中也是可行的，但是F\#类型的轻量级特性意味着我们更有可能进行这种重构。
 
-## A basic example ##
+## 一个基本例子 ##
 
-For demonstration of the various uses of types, I'll work with a very straightforward example, namely a `Contact` type, such as the one below.
+为了演示类型的各种用法，我将使用一个非常简单的示例，即`Contact`类型，如下所示。
 
 ```fsharp
 type Contact =
@@ -29,7 +27,7 @@ type Contact =
     LastName: string;
 
     EmailAddress: string;
-    //true if ownership of email address is confirmed
+    // 如果确认了电子邮件地址的所有权，返回true
     IsEmailVerified: bool;
 
     Address1: string;
@@ -37,31 +35,31 @@ type Contact =
     City: string;
     State: string;
     Zip: string;
-    //true if validated against address service
+    // 如果已根据地址服务进行验证，则为true
     IsAddressValid: bool;
     }
 
 ```
 
-This seems very obvious -- I'm sure we have all seen something like this many times. So what can we do with it?  How can we refactor this to make the most of the type system?
+这似乎很明显——我相信我们都见过很多次这样的事情。那么我们能做些什么呢？我们如何重构它以充分利用类型系统呢？
 
-## Creating "atomic" types ##
+## 创建「原子」类型 ##
 
-The first thing to do is to look at the usage pattern of data access and updates.  For example, would be it be likely that `Zip` is updated without also updating `Address1` at the same time? On the other hand, it might be common that a transaction updates `EmailAddress` but not `FirstName`.
+首先要做的是查看数据访问和更新的使用模式。例如，是否有可能在更新`Zip`的同时不更新`Address1` ？另一方面，事务更新`EmailAddress`而不更新`FirstName`可能很常见。
 
-This leads to the first guideline:
+这就引出了第一条准则：
 
-* *Guideline: Use records or tuples to group together data that are required to be consistent (that is "atomic") but don't needlessly group together data that is not related.*
+* *指导原则：使用记录或元组将需要保持一致性的数据（即「原子」）分组在一起，但不要不必要地将不相关的数据分组在一起。*
 
-In this case, it is fairly obvious that the three name values are a set, the address values are a set, and the email is also a set.
+在本例中，很明显三个名称值是一个集合，地址值是一个集合，电子邮件也是一个集合。
 
-We have also some extra flags here, such as `IsAddressValid` and `IsEmailVerified`. Should these be part of the related set or not?  Certainly yes for now, because the flags are dependent on the related values.
+我们在这里也有一些额外的标志，如`IsAddressValid`和`IsEmailVerified`。这些应该是相关集合的一部分吗？现在当然可以，因为标志依赖于相关的值。
 
-For example, if the `EmailAddress` changes, then `IsEmailVerified` probably needs to be reset to false at the same time.
+例如，如果`EmailAddress`更改，那么`IsEmailVerified`可能需要同时重置为false。
 
-For `PostalAddress`, it seems clear that the core "address" part is a useful common type, without the `IsAddressValid` flag. On the other hand, the `IsAddressValid` is associated with the address, and will be updated when it changes.
+对于`PostalAddress`，很明显，核心「address」部分是一个有用的公共类型，没有`IsAddressValid`标志。另一方面，`IsAddressValid`与地址相关联，当地址发生变化时，`IsAddressValid`将被更新。
 
-So it seems that we should create *two* types. One is a generic `PostalAddress` and the other is an address in the context of a contact, which we can call `PostalContactInfo`, say.
+因此，我们似乎应该创建*两个*类型。一个是通用的`PostalAddress`，另一个是联系人上下文中的地址，我们可以称其为`PostalContactInfo`。
 
 ```fsharp
 type PostalAddress =
@@ -80,28 +78,27 @@ type PostalContactInfo =
     }
 ```
 
-
-Finally, we can use the option type to signal that certain values, such as `MiddleInitial`, are indeed optional.
+最后，我们可以使用选项类型来表示某些值，如`MiddleInitial`，确实是可选的。
 
 ```fsharp
 type PersonalName =
     {
     FirstName: string;
-    // use "option" to signal optionality
+    // 使用「option」来表示可选性
     MiddleInitial: string option;
     LastName: string;
     }
 ```
 
-## Summary
+## 总结 ##
 
-With all these changes, we now have the following code:
+经过这些修改，我们现在有了以下代码：
 
 ```fsharp
 type PersonalName =
     {
     FirstName: string;
-    // use "option" to signal optionality
+    // 使用「option」来表示可选性
     MiddleInitial: string option;
     LastName: string;
     }
@@ -136,7 +133,6 @@ type Contact =
 
 ```
 
-We haven't written a single function yet, but already the code represents the domain better. However, this is just the beginning of what we can do.
+我们还没有编写一个函数，但是代码已经更好地表示了域。然而，这只是我们所能做的事情的开始。
 
-Next up, using single case unions to add semantic meaning to primitive types.
-
+接下来，使用单例联合为基本类型添加语义。

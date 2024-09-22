@@ -9,9 +9,9 @@ seriesOrder: 3
 categories: [Types, DDD]
 ---
 
-In this post, we look at a key benefit of F#, which using the type system to "make illegal states unrepresentable" (a phrase borrowed from [Yaron Minsky](https://blog.janestreet.com/effective-ml-revisited/)).
+在这篇文章中，我们来看看F\#的一个关键好处，它使用类型系统来「使非法状态不可表示」（一个借用自Yaron Minsky的短语）。
 
-Let's look at our `Contact` type. Thanks to the previous refactoring, it is quite simple:
+来看看我们的`Contact`类型。多亏了前面的重构，它变得非常简单：
 
 ```fsharp
 type Contact =
@@ -22,11 +22,11 @@ type Contact =
     }
 ```
 
-Now let's say that we have the following simple business rule: *"A contact must have an email or a postal address"*. Does our type conform to this rule?
+现在假设我们有以下简单的业务规则：*「联系人必须有电子邮件或邮政地址」*。我们的类型符合这个规则吗？
 
-The answer is no. The business rule implies that a contact might have an email address but no postal address, or vice versa. But as it stands, our type requires that a contact must always have *both* pieces of information.
+答案是否定的。业务规则意味着联系人可能有电子邮件地址但没有邮政地址，反之亦然。但就目前而言，我们的类型要求联系人必须始终*都具有*这两项信息。
 
-The answer seems obvious -- make the addresses optional, like this:
+答案似乎很明显——将地址设为可选，如下所示：
 
 ```fsharp
 type Contact =
@@ -37,19 +37,19 @@ type Contact =
     }
 ```
 
-But now we have gone too far the other way. In this design, it would be possible for a contact to have neither type of address at all. But the business rule says that at least one piece of information *must* be present.
+但现在我们在另一条路上走得太远了。在这种设计中，一个联系人可能没有任何类型的地址。但是业务规则要求*必须*提供至少一条信息。
 
-What's the solution?
+解决方案是什么？
 
-## Making illegal states unrepresentable
+## 使非法状态无法表达 ##
 
-If we think about the business rule carefully, we realize that there are three possibilities:
+如果我们仔细考虑业务规则，我们意识到有三种可能性：
 
-* A contact only has an email address
-* A contact only has a postal address
-* A contact has both a email address and a postal address
+* 联系人只有电子邮件地址
+* 联系人只有一个邮政地址
+* 联系人有电子邮件地址和邮政地址
 
-Once it is put like this, the solution becomes obvious -- use a union type with a case for each possibility.
+一旦它变成这样，解决方案就变得显而易见了——为每种可能性使用联合类型。
 
 ```fsharp
 type ContactInfo =
@@ -64,18 +64,18 @@ type Contact =
     }
 ```
 
-This design meets the requirements perfectly. All three cases are explicitly represented, and the fourth possible case (with no email or postal address at all) is not allowed.
+这个设计完全符合要求。这三种情况都明确表示，第四种可能的情况（根本没有电子邮件或邮政地址）是不允许的。
 
-Note that for the "email and post" case, I just used a tuple type for now. It's perfectly adequate for what we need.
+注意，对于「email and post」的情况，我现在只使用元组类型。完全可以满足我们的需要。
 
-### Constructing a ContactInfo
+### 构造ContactInfo ###
 
-Now let's see how we might use this in practice. We'll start by creating a new contact:
+现在让我们看看如何在实践中使用它。首先创建一个新的联系人：
 
 ```fsharp
 let contactFromEmail name emailStr =
     let emailOpt = EmailAddress.create emailStr
-    // handle cases when email is valid or invalid
+    // 处理邮件有效或无效的情况
     match emailOpt with
     | Some email ->
         let emailContactInfo =
@@ -88,18 +88,17 @@ let name = {FirstName = "A"; MiddleInitial=None; LastName="Smith"}
 let contactOpt = contactFromEmail name "abc@example.com"
 ```
 
-In this code, we have created a simple helper function `contactFromEmail` to create a new contact by passing in a name and email.
-However, the email might not be valid, so the function has to handle both cases, which it does by returning a `Contact option`, not a `Contact`
+在这段代码中，我们创建了一个简单的辅助函数`contactFromEmail`，通过传入姓名和电子邮件地址来创建一个新联系人。然而，电子邮件可能是无效的，因此这个函数必须处理这两种情况，它返回一个`Contact option`，而不是`Contact`。
 
-### Updating a ContactInfo
+### 更新ContactInfo ###
 
-Now if we need to add a postal address to an existing `ContactInfo`, we have no choice but to handle all three possible cases:
+现在，如果需要在已有的`ContactInfo`中添加邮政地址，我们别无选择，只能同时处理这三种情况：
 
-* If a contact previously only had an email address, it now has both an email address and a postal address, so return a contact using the `EmailAndPost` case.
-* If a contact previously only had a postal address, return a contact using the `PostOnly` case, replacing the existing address.
-* If a contact previously had both an email address and a postal address, return a contact with using the `EmailAndPost` case, replacing the existing address.
+* 如果联系人以前只有电子邮件地址，现在它同时有电子邮件地址和邮政地址，因此使用`EmailAndPost`实例返回一个联系人。
+* 如果联系人以前只有邮政地址，则使用`PostOnly`返回联系人，替换现有地址。
+* 如果联系人之前同时拥有电子邮件地址和邮政地址，则使用`EmailAndPost`返回一个联系人，替换现有的地址。
 
-So here's a helper method that updates the postal address. You can see how it explicitly handles each case.
+这是一个更新邮政地址的辅助方法。你可以看到它是如何显式地处理每种情况的。
 
 ```fsharp
 let updatePostalAddress contact newPostalAddress =
@@ -108,18 +107,18 @@ let updatePostalAddress contact newPostalAddress =
         match contactInfo with
         | EmailOnly email ->
             EmailAndPost (email,newPostalAddress)
-        | PostOnly _ -> // ignore existing address
+        | PostOnly _ -> // 忽略现有地址
             PostOnly newPostalAddress
-        | EmailAndPost (email,_) -> // ignore existing address
+        | EmailAndPost (email,_) -> // 忽略现有地址
             EmailAndPost (email,newPostalAddress)
-    // make a new contact
+    // 新建一个联系人
     {Name=name; ContactInfo=newContactInfo}
 ```
 
-And here is the code in use:
+下面是使用的代码：
 
 ```fsharp
-let contact = contactOpt.Value   // see warning about option.Value below
+let contact = contactOpt.Value   // 请参阅关于选项的警告。下面的值
 let newPostalAddress =
     let state = StateCode.create "CA"
     let zip = ZipCode.create "97210"
@@ -129,25 +128,23 @@ let newPostalAddress =
             Address1= "123 Main";
             Address2="";
             City="Beverly Hills";
-            State=state.Value; // see warning about option.Value below
-            Zip=zip.Value;     // see warning about option.Value below
+            State=state.Value; // 请参阅关于选项的警告。下面的值
+            Zip=zip.Value;     // 请参阅关于选项的警告。下面的值
             };
         IsAddressValid=false
     }
 let newContact = updatePostalAddress contact newPostalAddress
 ```
 
-*WARNING: I am using `option.Value` to extract the contents of an option in this code.
-This is ok when playing around interactively but is extremely bad practice in production code! You should always use matching to handle both cases of an option.*
+*警告:在这段代码中，我使用`option.Value`来提取选项的内容。这在交互式环境下是可以的，但在生产代码中是非常糟糕的做法！你应该始终使用匹配来处理选项的两种情况。*
 
+## 为什么要费心创建这些复杂的类型呢？ ##
 
-## Why bother to make these complicated types?
+说到这里，你可能会说我们让事情变得不必要的复杂了。我将以以下几点来回答：
 
-At this point, you might be saying that we have made things unnecessarily complicated. I would answer with these points:
+首先，业务逻辑*很*复杂。没有简单的方法可以避免它。如果你的代码没有这么复杂，说明你没有正确地处理所有情况。
 
-First, the business logic *is* complicated. There is no easy way to avoid it. If your code is not this complicated, you are not handling all the cases properly.
-
-Second, if the logic is represented by types, it is automatically self documenting. You can look at the union cases below and immediate see what the business rule is. You do not have to spend any time trying to analyze any other code.
+其次，如果逻辑是由类型表示的，那么它是自动的自文档。你可以查看下面的联合示例，并立即了解业务规则是什么。你不必花费任何时间试图分析任何其他代码。
 
 ```fsharp
 type ContactInfo =
@@ -156,8 +153,8 @@ type ContactInfo =
     | EmailAndPost of EmailContactInfo * PostalContactInfo
 ```
 
-Finally, if the logic is represented by a type, any changes to the business rules will immediately create breaking changes, which is a generally a good thing.
+最后，如果逻辑由类型表示，对业务规则的任何更改都将立即创建重大更改，这通常是一件好事。
 
-In the next post, we'll dig deeper into the last point. As you try to represent business logic using types, you may suddenly find that can gain a whole new insight into the domain.
+在下一篇文章中，我们将深入探讨最后一点。当你尝试使用类型表示业务逻辑时，你可能会突然发现，可以获得对该领域的全新见解。
 
 {{< book_page_ddd_img >}}
