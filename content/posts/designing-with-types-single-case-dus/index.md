@@ -49,7 +49,7 @@ type StateCode = { StateCode: string}
 
 这两种方法都可以用来创建围绕字符串或其他基本类型的包装器类型，那么哪种方法更好呢？
 
-答案通常是单例联合类型。「wrap」和「unwrap」要容易得多，因为「union case」实际上是一个适当的构造函数。展开可以使用内联模式匹配完成。
+答案通常是单例联合类型。「包装」和「解包」要容易得多，因为「联合用例」实际上是一个适当的构造函数。解包可以使用内联模式匹配完成。
 
 下面是一些如何构造和解构`EmailAddress`类型的示例：
 
@@ -121,9 +121,9 @@ type Contact =
 
 联合类型的另一个优点是可以用模块签名封装实现，我们将在下面讨论。
 
-## 命名单个案例联合的「案例」 ##
+## 命名单例联合的「案例」 ##
 
-在上面的示例中，我们对case使用了与类型相同的名称：
+在上面的示例中，我们对实例使用了与类型相同的名称：
 
 ```fsharp
 type EmailAddress = EmailAddress of string
@@ -149,7 +149,7 @@ let x = EmailAddress y
 
 这里指向值世界中的事物，因此`EmailAddress`指向构造函数。
 
-## 构建单例并集 ##
+## 构建单例联合 ##
 
 对于具有特殊含义的值，如电子邮件地址和邮政编码，通常只允许某些值。并不是每个字符串都是可接受的电子邮件或邮政编码。
 
@@ -438,7 +438,7 @@ let processFormSubmit () =
 
 什么时候需要打开包装？同样，通常只在服务边界。例如，当你将电子邮件持久化到数据库，或绑定到UI元素或视图模型时。
 
-避免显式展开的一个技巧是再次使用延续方法，传入一个将应用于包装值的函数。
+避免显式解包的一个技巧是再次使用延续方法，传入一个将应用于包装值的函数。
 
 也就是说，与其显式调用「解包」函数：
 
@@ -537,7 +537,7 @@ module StateCode =
     // 使用创建延续
     let createWithCont success failure  (s:string) =
         let s' = s.ToUpper()
-        let stateCodes = ["AZ";"CA";"NY"] //etc
+        let stateCodes = ["AZ";"CA";"NY"] // 等等
         if stateCodes |> List.exists ((=) s')
             then success (StateCode s')
             else failure "State is not in list"

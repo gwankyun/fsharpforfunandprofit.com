@@ -11,7 +11,7 @@ categories: [Types, DDD]
 
 在本系列中，我们将介绍在设计过程中使用类型的一些方法。特别是，深思熟虑地使用类型可以使设计更加透明，同时提高正确性。
 
-本系列将关注设计的「微观层面」。也就是说，在单个类型和功能的最低级别上工作。更高层次的设计方法，以及使用函数式或面向对象风格的相关决策，将在另一个系列中讨论。
+本系列将关注设计的「微观层面」。也就是说，在单个类型和函数的最低级别上工作。更高层次的设计方法，以及使用函数式或面向对象风格的相关决策，将在另一个系列中讨论。
 
 许多建议在C\#或Java中也是可行的，但是F\#类型的轻量级特性意味着我们更有可能进行这种重构。
 
@@ -84,7 +84,7 @@ type PostalContactInfo =
 type PersonalName =
     {
     FirstName: string;
-    // 使用「option」来表示可选性
+    // 使用「option」来表示可选
     MiddleInitial: string option;
     LastName: string;
     }
@@ -98,7 +98,7 @@ type PersonalName =
 type PersonalName =
     {
     FirstName: string;
-    // 使用「option」来表示可选性
+    // 使用「option」来表示可选
     MiddleInitial: string option;
     LastName: string;
     }
