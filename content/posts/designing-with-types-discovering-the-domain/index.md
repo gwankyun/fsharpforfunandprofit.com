@@ -1,19 +1,19 @@
 ---
 layout: post
-title: "Designing with types: Discovering new concepts"
+title: "面向类型设计： 发现新概念"
 description: "Gaining deeper insight into the domain"
 date: 2013-01-15
 nav: thinking-functionally
-seriesId: "Designing with types"
+seriesId: "面向类型设计"
 seriesOrder: 4
 categories: [Types, DDD]
 ---
 
-In the last post, we looked at how we could represent a business rule using types.
+在上一篇文章中，我们了解了如何使用类型来表示业务规则。
 
-The rule was: *"A contact must have an email or a postal address"*.
+规则是：*「联系人必须有电子邮件或邮政地址」*。
 
-And the type we designed was:
+我们设计的类型是：
 
 ```fsharp
 type ContactInfo =
@@ -22,17 +22,17 @@ type ContactInfo =
     | EmailAndPost of EmailContactInfo * PostalContactInfo
 ```
 
-Now let's say that the business decides that phone numbers need to be supported as well.  The new business rule is: *"A contact must have at least one of the following: an email, a postal address, a home phone, or a work phone"*.
+现在假设企业决定也需要支持电话号码。新的商业规则是：*「联系人必须至少有以下其中之一：电子邮箱、邮政地址、家庭电话或工作电话」*。
 
-How can we represent this now?
+我们现在如何表示它呢？
 
-A little thought reveals that there are 15 possible combinations of these four contact methods. Surely we don't want to create a union case with 15 choices? Is there a better way?
+稍加思考就会发现，这四种接触方式有15种可能的组合。我们肯定不想创建一个有15种选择的联合案例吧？还有更好的方法吗？
 
-Let's hold that thought and look at a different but related problem.
+让我们继续这个想法，看看另一个不同但相关的问题。
 
-## Forcing breaking changes when requirements change
+## 当需求变更时强制进行重大变更 ##
 
-Here's the problem. Say that you have a contact structure which contains a list of email addresses and also a list of postal addresses, like so:
+这就是问题所在。假设你有一个联系人结构，其中包含电子邮件地址列表和邮政地址列表，如下所示：
 
 ```fsharp
 type ContactInformation =
@@ -42,14 +42,14 @@ type ContactInformation =
     }
 ```
 
-And, also let's say that you have created a `printReport` function that loops through the information and prints it out in a report:
+另外，假设你已经创建了一个`printReport`函数，它循环遍历这些信息并将其打印出来：
 
 ```fsharp
-// mock code
+// 模拟代码
 let printEmail emailAddress =
     printfn "Email Address is %s" emailAddress
 
-// mock code
+// 模拟代码
 let printPostalAddress postalAddress =
     printfn "Postal Address is %s" postalAddress
 
@@ -64,12 +64,12 @@ let printReport contactInfo =
          printPostalAddress postalAddress
 ```
 
-Crude, but simple and understandable.
+粗糙，但简单易懂。
 
-Now if the new business rule comes into effect, we might decide to change the structure to have some new lists for the phone numbers.  The updated structure will now look something like this:
+现在，如果新的业务规则生效，我们可能决定改变结构，为电话号码添加一些新的列表。更新后的结构现在看起来像这样：
 
 ```fsharp
-type PhoneContactInfo = string // dummy for now
+type PhoneContactInfo = string // 临时假数据
 
 type ContactInformation =
     {
@@ -80,11 +80,11 @@ type ContactInformation =
     }
 ```
 
-If you make this change, you also want to make sure that all the functions that process the contact information are updated to handle the new phone cases as well.
+如果做了这个修改，还需要确保所有处理联系信息的函数也都更新了，以处理新的手机例子。
 
-Certainly, you will be forced to fix any pattern matches that break. But in many cases, you would *not* be forced to handle the new cases.
+当然，你将被迫修复任何破坏的模式匹配。但在很多情况下，你*不会*被迫处理新案例。
 
-For example, here's `printReport` updated to work with the new lists:
+例如，修改后的`printReport`可用于新列表：
 
 ```fsharp
 let printReport contactInfo =
@@ -98,15 +98,15 @@ let printReport contactInfo =
          printPostalAddress postalAddress
 ```
 
-Can you see the deliberate mistake? Yes, I forgot to change the function to handle the phones. The new fields in the record have not caused the code to break at all. There is no guarantee that you will remember to handle the new cases. It would be all too easy to forget.
+你能看出这是故意的错误吗？是的，我忘记更改处理电话的功能了。记录中的新字段根本没有导致代码中断。不能保证你会记得处理新案件。这太容易忘记了。
 
-Again, we have the challenge: can we design types such that these situations cannot easily happen?
+再次，我们面临的挑战是：我们能否设计出这样的类型，使这些情况不会轻易发生？
 
-## Deeper insight into the domain
+## 更深入的领域洞察 ##
 
-If you think about this example a bit more deeply, you will realize that we have missed the forest for the trees.
+如果你更深入地思考这个例子，你会意识到我们是只见树木不见森林。
 
-Our initial concept was: *"to contact a customer, there will be a list of possible emails, and a list of possible addresses, etc"*.
+我们最初的概念是：*「要联系客户，将有一个可能的电子邮件列表，以及可能的地址列表，等等」*。
 
 But really, this is all wrong. A much better concept is: *"To contact a customer, there will be a list of contact methods. Each contact method could be an email OR a postal address OR a phone number"*.
 
@@ -158,7 +158,7 @@ And from a development point of view, changing the type to be a union means that
 
 {{< book_page_ddd >}}
 
-## Back to the business rule with 15 possible combinations
+## Back to the business rule with 15 possible combinations ##
 
 So now back to the original example. We left it thinking that, in order to encode the business rule, we might have to create 15 possible combinations of various contact methods.
 
@@ -193,21 +193,10 @@ In this design, the `PrimaryContactMethod` is required, and the secondary contac
 
 And this refactoring too, has given us some insight.  It may be that the concepts of "primary" and "secondary" contact methods might, in turn, clarify code in other areas, creating a cascading change of insight and refactoring.
 
-## Summary
+## Summary ##
 
 In this post, we've seen how using types to model business rules can actually help you to understand the domain at a deeper level.
 
 In the *Domain Driven Design* book, Eric Evans devotes a whole section and two chapters in particular (chapters 8 and 9) to discussing the importance of [refactoring towards deeper insight](http://dddcommunity.org/wp-content/uploads/files/books/evans_pt03.pdf).  The example in this post is simple in comparison, but I hope that it shows that how an insight like this can help improve both the model and the code correctness.
 
 In the next post, we'll see how types can help with representing fine-grained states.
-
-
-
-
-
-
-
-
-
-
-
