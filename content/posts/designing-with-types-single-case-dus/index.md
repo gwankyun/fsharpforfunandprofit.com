@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Designing with types: Single case union types"
+title: "面向类型设计: 单例联合类型"
 description: "Adding meaning to primitive types"
 date: 2013-01-13
 nav: thinking-functionally
-seriesId: "Designing with types"
+seriesId: "面向类型设计"
 seriesOrder: 2
 categories: [Types, DDD]
 ---

@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Designing with types: Introduction"
+title: "面向类型设计： 引言"
 description: "Making design more transparent and improving correctness"
 date: 2013-01-12
 nav: thinking-functionally
-seriesId: "Designing with types"
+seriesId: "面向类型设计"
 seriesOrder: 1
 categories: [Types, DDD]
 ---

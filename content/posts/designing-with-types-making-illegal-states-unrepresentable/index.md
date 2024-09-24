@@ -1,10 +1,10 @@
 ---
 layout: post
-title: "Designing with types: Making illegal states unrepresentable"
+title: "面向类型设计： 使非法状态不可表示"
 description: "Encoding business logic in types"
 date: 2013-01-14
 nav: thinking-functionally
-seriesId: "Designing with types"
+seriesId: "面向类型设计"
 seriesOrder: 3
 categories: [Types, DDD]
 ---
