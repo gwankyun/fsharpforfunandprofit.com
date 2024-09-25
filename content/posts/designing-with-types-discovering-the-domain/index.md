@@ -108,11 +108,11 @@ let printReport contactInfo =
 
 我们最初的概念是：*「要联系客户，将有一个可能的电子邮件列表，以及可能的地址列表，等等」*。
 
-But really, this is all wrong. A much better concept is: *"To contact a customer, there will be a list of contact methods. Each contact method could be an email OR a postal address OR a phone number"*.
+但实际上，这一切都是错误的。一个更好的概念是：*「要联系客户，将有一个联系方法列表。每种联系方式都可以是电子邮件、邮政地址或电话号码」*。
 
-This is a key insight into how the domain should be modelled.  It creates a whole new type, a "ContactMethod", which resolves our problems in one stroke.
+这是对域应该如何建模的关键洞察。它创建了一个全新的类型「ContactMethod」，一下子就解决了我们的问题。
 
-We can immediately refactor the types to use this new concept:
+我们可以立即重构类型以使用这个新概念：
 
 ```fsharp
 type ContactMethod =
@@ -127,10 +127,10 @@ type ContactInformation =
     }
 ```
 
-And the reporting code must now be changed to handle the new type as well:
+现在必须修改报告代码以处理新类型：
 
 ```fsharp
-// mock code
+// 模拟代码
 let printContactMethod cm =
     match cm with
     | Email emailAddress ->
@@ -150,23 +150,23 @@ let printReport contactInfo =
     |> List.iter printContactMethod
 ```
 
-These changes have a number of benefits.
+这些变化有很多好处。
 
-First, from a modelling point of view, the new types represent the domain much better, and are more adaptable to changing requirements.
+首先，从建模的角度来看，新类型更好地表示了领域，并且更能适应变化的需求。
 
-And from a development point of view, changing the type to be a union means that any new cases that we add (or remove) will break the code in a very obvious way, and it will be much harder to accidentally forget to handle all the cases.
+从开发的角度来看，将类型更改为联合意味着我们添加（或删除）的任何新情况都将以非常明显的方式破坏代码，并且将更加难以意外忘记处理所有情况。
 
 {{< book_page_ddd >}}
 
-## Back to the business rule with 15 possible combinations ##
+## 回到具有15种可能组合的业务规则 ##
 
-So now back to the original example. We left it thinking that, in order to encode the business rule, we might have to create 15 possible combinations of various contact methods.
+现在回到最初的例子。我们认为，为了编码业务规则，我们可能必须创建15种不同联系方法的可能组合。
 
-But the new insight from the reporting problem also affects our understanding of the business rule.
+但是报告问题的新见解也影响了我们对业务规则的理解。
 
-With the "contact method" concept in our heads, we can rephase the requirement as: *"A customer must have at least one contact method. A contact method could be an email OR a postal addresses OR a phone number"*.
+有了头脑中的「联系方法」概念，我们可以将需求重新划分为：*「客户必须至少有一种联系方法。联系方式可以是电子邮件、邮政地址或电话号码」*。
 
-So let's redesign the `Contact` type to have a list of contact methods:
+下面重新设计`Contact`类型，让它包含一个联系人方法列表：
 
 ```fsharp
 type Contact =
@@ -176,9 +176,9 @@ type Contact =
     }
 ```
 
-But this is still not quite right. The list could be empty.  How can we enforce the rule that there must be *at least* one contact method?
+但这仍然不完全正确。列表可以是空的。我们如何执行必须*至少*有一个联系方法的规则？
 
-The simplest way is to create a new field that is required, like this:
+最简单的方法是创建一个必填字段，如下所示：
 
 ```fsharp
 type Contact =
@@ -189,14 +189,14 @@ type Contact =
     }
 ```
 
-In this design, the `PrimaryContactMethod` is required, and the secondary contact methods are optional, which is exactly what the business rule requires!
+在这个设计中，`PrimaryContactMethod`是必需的，而次要联系方法是可选的，这正是业务规则所要求的！
 
-And this refactoring too, has given us some insight.  It may be that the concepts of "primary" and "secondary" contact methods might, in turn, clarify code in other areas, creating a cascading change of insight and refactoring.
+这种重构也给了我们一些启示。「主要」和「次要」联系方法的概念可能反过来澄清其他领域的代码，创建洞察力和重构的级联变化。
 
-## Summary ##
+## 总结 ##
 
-In this post, we've seen how using types to model business rules can actually help you to understand the domain at a deeper level.
+在这篇文章中，我们看到了如何使用类型来建模业务规则，实际上可以帮助你在更深层次上理解领域。
 
-In the *Domain Driven Design* book, Eric Evans devotes a whole section and two chapters in particular (chapters 8 and 9) to discussing the importance of [refactoring towards deeper insight](http://dddcommunity.org/wp-content/uploads/files/books/evans_pt03.pdf).  The example in this post is simple in comparison, but I hope that it shows that how an insight like this can help improve both the model and the code correctness.
+在《领域驱动设计》（*Domain Driven Design*）一书中，Eric Evans用了整整一节，特别是两章（第8章和第9章）来讨论[重构对于深入洞察](http://dddcommunity.org/wp-content/uploads/files/books/evans_pt03.pdf)的重要性。相比之下，这篇文章中的例子很简单，但我希望它表明这样的洞察力可以帮助提高模型和代码的正确性。
 
-In the next post, we'll see how types can help with representing fine-grained states.
+在下一篇文章中，我们将看到类型如何帮助表示细粒度状态。
