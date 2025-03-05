@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Designing with types: Making state explicit"
+title: "面向类型设计： 明确状态"
 description: "Using state machines to ensure correctness"
 date: 2013-01-16
 nav: thinking-functionally
@@ -9,11 +9,11 @@ seriesOrder: 5
 categories: [Types, DDD]
 ---
 
-In this post we will look at making implicit states explicit by using state machines, and then modelling these state machines with union types.
+在这篇文章中，我们将探讨如何通过使用状态机来明确隐式状态，然后使用联合类型对这些状态机进行建模。
 
-## Background ##
+## 背景 ##
 
-In an [earlier post](/posts/designing-with-types-single-case-dus/) in this series, we looked at single case unions as a wrapper for types such as email addresses.
+在本系列的[上一篇文章](/posts/designing-with-types-single-case-dus/)中，我们研究了单例联合类型，将其作为诸如电子邮件地址等类型的包装器。
 
 ```fsharp
 module EmailAddress =
@@ -26,11 +26,12 @@ module EmailAddress =
             else None
 ```
 
-This code assumes that either an address is valid or it is not. If it is not, we reject it altogether and return `None` instead of a valid value.
+这段代码假设一个地址要么有效，要么无效。如果无效，我们会完全拒绝它，并返回`None`而不是一个有效的值。
 
-But there are degrees of validity. For example, what happens if we want to keep an invalid email address around rather than just rejecting it?  In this case, as usual, we want to use the type system to make sure that we don't get a valid address mixed up with an invalid address.
+但有效性是有程度之分的。例如，如果我们想保留一个无效的电子邮件地址而不是直接拒绝它，该怎么办呢？在这种情况下，和往常一样，我们希望使用类型系统来确保不会将有效地址与无效地址混淆。
 
-The obvious way to do this is with a union type:
+显而易见的做法是使用联合类型：
+
 ```fsharp
 module EmailAddress =
 
@@ -48,7 +49,7 @@ module EmailAddress =
     let invalid = create "example.com"
 ```
 
-and with these types we can ensure that only valid emails get sent:
+有了这些类型，我们可以确保只发送有效的电子邮件：
 
 ```fsharp
 let sendMessageTo t =
@@ -59,29 +60,29 @@ let sendMessageTo t =
          // ignore
 ```
 
-So far, so good. This kind of design should be obvious to you by now.
+到目前为止，一切都很顺利。到现在为止，这种设计对你来说应该是显而易见的。
 
-But this approach is more widely applicable than you might think.  In many situations, there are similar "states" that are not made explicit, and handled with flags, enums, or conditional logic in code.
+但这种方法的应用范围比你想象的要广泛。在许多情况下，存在类似的“状态”，但这些状态没有被明确表示出来，而是在代码中用标志、枚举或条件逻辑来处理。
 
-## State machines ##
+## 状态机 ##
 
-In the example above, the "valid" and "invalid" cases are mutually incompatible. That is, a valid email can never become invalid, and vice versa.
+在上面的例子中，“有效”和“无效”的情况是相互排斥的。也就是说，一个有效的电子邮件永远不会变成无效的，反之亦然。
 
-But in many cases, it is possible to go from one case to another, triggered by some kind of event. At which point we have a ["state machine"](http://en.wikipedia.org/wiki/Finite-state_machine), where each case represents a "state", and moving from one state to another is a "transition".
+但在很多情况下，通过某种事件的触发，从一种情况转变到另一种情况是可能的。这时我们就有了一个[“状态机”](http://en.wikipedia.org/wiki/Finite-state_machine)，其中每种情况代表一个“状态”，从一个状态到另一个状态的转变就是一个“转换”。
 
-Some examples:
+一些例子：
 
-* A email address might have states "Unverified" and "Verified", where you can transition from the "Unverified" state to the "Verified" state by asking the user to click on a link in a confirmation email.
+* 一个电子邮件地址可能有“未验证”和“已验证”两种状态，你可以通过要求用户点击确认邮件中的链接，从“未验证”状态转换到“已验证”状态。
 ![State transition diagram: Verified Email](./State_VerifiedEmail.png)
 
-* A shopping cart might have states "Empty", "Active" and "Paid", where you can transition from the "Empty" state to the "Active" state by adding an item to the cart, and to the "Paid" state by paying.
+* 一个购物车可能有“空”、“活跃”和“已付款”三种状态，你可以通过向购物车中添加商品，从“空”状态转换到“活跃”状态，通过付款转换到“已付款”状态。
 ![State transition diagram: Shopping Cart](./State_ShoppingCart.png)
 
-* A game such as chess might have states "WhiteToPlay", "BlackToPlay" and "GameOver", where you can transition from the "WhiteToPlay" state to the "BlackToPlay" state by White making a non-game-ending move, or transition to the "GameOver" state by playing a checkmate move.
+* 像国际象棋这样的游戏可能有“白方回合”、“黑方回合”和“游戏结束”三种状态，你可以通过白方进行非结束游戏的移动，从“白方回合”状态转换到“黑方回合”状态，或者通过将死对方的移动转换到“游戏结束”状态。
 ![State transition diagram: Chess game](./State_Chess.png)
 
-In each of these cases, we have a set of states, a set of transitions, and events that can trigger a transition.
-State machines are often represented by a table, like this one for a shopping cart:
+在这些例子中，我们都有一组状态、一组转换，以及可以触发转换的事件。
+状态机通常用一个表格来表示，比如下面这个购物车的表格：
 
 {{<rawtable>}}
 <table class="table table-condensed">
@@ -120,45 +121,44 @@ State machines are often represented by a table, like this one for a shopping ca
 </table>
 {{</rawtable>}}
 
-With a table like this, you can quickly see exactly what should happen for each event when the system is in a given state.
+有了这样的表格，你可以快速了解当系统处于给定状态时，每个事件应该发生什么。
 
 {{< linktarget "why-use" >}}
 
-## Why use state machines?
+## 为什么使用状态机？ ##
 
-There are a number of benefits to using state machines in these cases:
+在这些情况下使用状态机有很多好处：
 
-**Each state can have different allowable behavior.**
+**每个状态可以有不同的允许行为。**
 
-In the verified email example, there is probably a business rule that says that you can only send password resets to verified email addresses, not to unverified addresses.
-And in the shopping cart example, only an active cart can be paid for, and a paid cart cannot be added to.
+在已验证电子邮件的例子中，可能有一个业务规则规定，你只能向已验证的电子邮件地址发送密码重置邮件，而不能向未验证的地址发送。
+在购物车的例子中，只有活跃的购物车才能付款，已付款的购物车不能再添加商品。
 
-**All the states are explicitly documented.**
+**所有状态都有明确的文档记录。**
 
-It is all too easy to have important states that are implicit but never documented.
+很容易出现一些重要的状态是隐式的，但从未被记录下来的情况。
 
-For example, the "empty cart" has different behavior from the "active cart" but it would be rare to see this documented explicitly in code.
+例如，“空购物车”的行为与“活跃购物车”不同，但在代码中很少会明确记录这一点。
 
-**It is a design tool that forces you to think about every possibility that could occur.**
+**它是一种设计工具，迫使你考虑每一种可能性。**
 
-A common cause of errors is that certain edge cases are not handled, but a state machine forces all cases to be thought about.
+错误的一个常见原因是某些边缘情况没有得到处理，但状态机迫使你考虑所有情况。
 
-For example, what should happen if we try to verify an already verified email?
-What happens if we try to remove an item from an empty shopping cart?
-What happens if white tries to play when the state is "BlackToPlay"? And so on.
+例如，如果我们尝试验证一个已经验证过的电子邮件会发生什么？
+如果我们尝试从一个空购物车中移除商品会发生什么？
+如果在“黑方回合”时白方尝试移动会发生什么？等等。
 
+## 如何在F#中实现简单的状态机 ##
 
-## How to implement simple state machines in F# ##
+你可能熟悉复杂的状态机，比如用于语言解析器和正则表达式的状态机。那些类型的状态机是从规则集或语法生成的，非常复杂。
 
-You are probably familiar with complex state machines, such as those used in language parsers and regular expressions.  Those kinds of state machines are generated from rule sets or grammars, and are quite complicated.
+我所说的状态机要简单得多。最多只有几种情况，转换的数量也很少，所以我们不需要使用复杂的生成器。
 
-The kinds of state machines that I'm talking about are much, much simpler. Just a few cases at the most, with a small number of transitions, so we don't need to use complex generators.
+那么，实现这些简单状态机的最佳方法是什么呢？
 
-So what is the best way implement these simple state machines?
+通常，每个状态都会有自己的类型，用于存储与该状态相关的数据（如果有的话），然后整个状态集将由一个联合类型表示。
 
-Typically, each state will have its own type, to store the data that is relevant to that state (if any), and then the entire set of states will be represented by a union class.
-
-Here's an example using the shopping cart state machine:
+下面是一个使用购物车状态机的例子：
 
 ```fsharp
 type ActiveCartData = { UnpaidItems: string list }
