@@ -41,8 +41,8 @@ module EmailAddress =
 
     let create (s:string) =
         if System.Text.RegularExpressions.Regex.IsMatch(s,@"^\S+@\S+\.\S+$")
-            then ValidEmailAddress s    // change result type
-            else InvalidEmailAddress s  // change result type
+            then ValidEmailAddress s    // 更改结果类型
+            else InvalidEmailAddress s  // 更改结果类型
 
     // test
     let valid = create "abc@example.com"
@@ -55,9 +55,9 @@ module EmailAddress =
 let sendMessageTo t =
     match t with
     | ValidEmailAddress email ->
-         // send email
+         // 发送电子邮件
     | InvalidEmailAddress _ ->
-         // ignore
+         // 忽略
 ```
 
 到目前为止，一切都很顺利。到现在为止，这种设计对你来说应该是显而易见的。
@@ -165,50 +165,50 @@ type ActiveCartData = { UnpaidItems: string list }
 type PaidCartData = { PaidItems: string list; Payment: float }
 
 type ShoppingCart =
-    | EmptyCart  // no data
+    | EmptyCart  // 无数据
     | ActiveCart of ActiveCartData
     | PaidCart of PaidCartData
 ```
 
-Note that the `EmptyCart` state has no data, so no special type is needed.
+请注意，`EmptyCart`状态没有数据，因此不需要特殊类型。
 
-Each event is then represented by a function that accepts the entire state machine (the union type) and returns a new version of the state machine (again, the union type).
+每个事件都由一个函数表示，该函数接受整个状态机（联合类型）并返回一个新的状态机版本（同样是联合类型）。
 
-Here's an example using two of the shopping cart events:
+以下是使用购物车的两个事件的示例：
 
 ```fsharp
 let addItem cart item =
     match cart with
     | EmptyCart ->
-        // create a new active cart with one item
+        // 创建一个包含一个商品的新活跃购物车
         ActiveCart {UnpaidItems=[item]}
     | ActiveCart {UnpaidItems=existingItems} ->
-        // create a new ActiveCart with the item added
+        // 创建一个添加了商品的新活跃购物车
         ActiveCart {UnpaidItems = item :: existingItems}
     | PaidCart _ ->
-        // ignore
+        // 忽略
         cart
 
 let makePayment cart payment =
     match cart with
     | EmptyCart ->
-        // ignore
+        // 忽略
         cart
     | ActiveCart {UnpaidItems=existingItems} ->
-        // create a new PaidCart with the payment
+        // 创建一个包含付款信息的新已付款购物车
         PaidCart {PaidItems = existingItems; Payment=payment}
     | PaidCart _ ->
-        // ignore
+        // 忽略
         cart
 ```
 
-You can see that from the caller's point of view, the set of states is treated as "one thing" for general manipulation (the `ShoppingCart` type), but when processing the events internally, each state is treated separately.
+从调用者的角度来看，状态集被视为“一个整体”进行通用操作（`ShoppingCart`类型），但在内部处理事件时，每个状态都被单独处理。
 
-### Designing event handling functions
+### 设计事件处理函数 ###
 
-Guideline: *Event handling functions should always accept and return the entire state machine*
+准则：*事件处理函数应该始终接受并返回整个状态机*
 
-You might ask: why do we have to pass in the whole shopping cart to the event-handling functions? For example, the `makePayment` event only has relevance when the cart is in the Active state, so why not just explicitly pass it the ActiveCart type, like this:
+你可能会问：为什么我们必须将整个购物车传递给事件处理函数？例如，`makePayment`事件仅在购物车处于活跃状态时才有意义，那么为什么不直接传递ActiveCart类型，如下所示：
 
 ```fsharp
 let makePayment2 activeCart payment =
@@ -219,22 +219,22 @@ let makePayment2 activeCart payment =
 Let's compare the function signatures:
 
 ```fsharp
-// the original function
+// 原始函数
 val makePayment : ShoppingCart -> float -> ShoppingCart
 
-// the new more specific function
+// 新的更具体函数
 val makePayment2 :  ActiveCartData -> float -> PaidCartData
 ```
 
-You will see that the original `makePayment` function takes a cart and results in a cart, while the new function takes an `ActiveCartData` and results in a `PaidCartData`, which seems to be much more relevant.
+你会发现，原始的`makePayment`函数接受一个购物车并返回一个购物车，而新函数接受一个`ActiveCartData`并返回一个 `PaidCartData`，这似乎更相关。
 
-But if you did this, how would you handle the same event when the cart was in a different state, such as empty or paid?  Someone has to handle the event for all three possible states somewhere, and it is much better to encapsulate this business logic inside the function than to be at the mercy of the caller.
+但如果这样做，当购物车处于不同状态（如空或已付款）时，如何处理相同的事件呢？必须在某个地方处理所有三种可能状态的事件，将这种业务逻辑封装在函数内部比依赖调用者要好得多
 
-### Working with "raw" states
+### 处理“原始”状态 ###
 
-Occasionally you do genuinely need to treat one of the states as a separate entity in its own right and use it independently. Because each state is a type as well, this is normally straightforward.
+偶尔，你确实需要将其中一个状态视为独立的实体并独立使用它。因为每个状态也是一种类型，所以通常这很简单。
 
-For example, if I need to report on all paid carts, I can pass it a list of `PaidCartData`.
+例如，如果我需要报告所有已付款的购物车，我可以传递一个`PaidCartData`列表。
 
 ```fsharp
 let paymentReport paidCarts =
@@ -243,12 +243,11 @@ let paymentReport paidCarts =
     paidCarts |> List.iter printOneLine
 ```
 
-By using a list of `PaidCartData` as the parameter rather than `ShoppingCart` itself, I ensure that I cannot accidentally report on unpaid carts.
+通过使用`PaidCartData`列表作为参数而不是`ShoppingCart`本身，我确保不会意外报告未付款的购物车。
 
-If you do this, it should be in a supporting function to the event handlers, never the event handlers themselves.
+如果这样做，应该在事件处理程序的辅助函数中进行，而不是在事件处理程序本身中。
 
 {{< linktarget "replace-flags" >}}
-
 
 ## Using explicit states to replace boolean flags ##
 
